@@ -24,11 +24,9 @@
 
 <br/>
 
-<div align="center">
-  <img width="30%" alt="스크린샷 2026-04-15 오후 9 43 39" src="https://github.com/user-attachments/assets/793efc21-2cc4-4887-8f8f-5801431306cf" />
-  <img width="30%" alt="스크린샷 2026-04-15 오후 9 44 54" src="https://github.com/user-attachments/assets/55945b21-3b50-442a-b81a-970748b4f755" />
-  <img width="30%" alt="스크린샷 2026-04-15 오후 9 45 07" src="https://github.com/user-attachments/assets/621c5940-39b8-4a01-8507-8575dde0c8d4" />
-</div>
+| | | |
+|:---:|:---:|:---:|
+| <img alt="스크린샷 2026-04-15 오후 9 43 39" src="https://github.com/user-attachments/assets/793efc21-2cc4-4887-8f8f-5801431306cf" /> | <img alt="스크린샷 2026-04-15 오후 9 44 54" src="https://github.com/user-attachments/assets/55945b21-3b50-442a-b81a-970748b4f755" /> | <img alt="스크린샷 2026-04-15 오후 9 45 07" src="https://github.com/user-attachments/assets/621c5940-39b8-4a01-8507-8575dde0c8d4" /> |
 
 ## 🇺🇸 English
 
