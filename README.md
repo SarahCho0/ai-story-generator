@@ -166,7 +166,10 @@ When you select an emotion, the page transforms:
 
 <br/>
 
-## 🇰🇷 한국어
+<details>
+<summary>🇰🇷 한국어</summary>
+
+<br/>
 
 ### 📁 프로젝트 파일
 
@@ -299,6 +302,8 @@ open -a "Safari" 그림이야기.html
 | 글씨가 깨져 보임 | 인터넷 연결 확인 (Google Fonts 로드 필요) |
 
 ---
+
+</details>
 
 <br/>
 
