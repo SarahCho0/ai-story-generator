@@ -1,0 +1,16 @@
+# API Key 및 환경변수
+.env
+
+# 캐시 파일
+image_descriptions_cache.json
+
+# 이미지 폴더 (용량이 크므로 제외)
+images/
+
+# macOS 시스템 파일
+.DS_Store
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Picture Story Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700&family=Noto+Serif+KR:wght@300;400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #eef6ff; --surface: #ffffff; --card: #f5eeff; --border: #c4a8e8;
+    --accent: #7c3aed; --accent2: #f5c400; --accent3: #38bdf8;
+    --text: #1e1b4b; --muted: #6b7280; --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 50%, #fef9c3 100%);
+    color: var(--text); font-family: 'Inter', sans-serif;
+    min-height: 100vh; padding: 40px 20px 80px; transition: background 0.7s ease;
+  }
+
+  .lang-toggle {
+    position: fixed; top: 20px; right: 24px; display: flex;
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 50px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,.14);
+    z-index: 999; transition: border-color 0.5s, background 0.5s;
+  }
+
+  .lang-btn {
+    background: transparent; border: none; cursor: pointer;
+    font-family: inherit; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: .04em; padding: 8px 18px; color: var(--muted);
+    transition: background .2s, color .2s;
+  }
+
+  .lang-btn:hover { color: var(--accent); }
+  .lang-btn.active { background: var(--accent); color: #fff; }
+
+  header { text-align: center; margin-bottom: 48px; padding-top: 8px; }
+
+  header h1 {
+    font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent3), var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 8px; transition: font-family 0.3s;
+  }
+
+  header p { color: var(--muted); font-size: 0.95rem; font-weight: 300; }
+  .container { max-width: 860px; margin: 0 auto; }
+
+  .api-section {
+    background: var(--surface); border: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(124,58,237,.1);
+    transition: border-color 0.5s, background 0.5s, box-shadow 0.5s;
+  }
+
+  label {
+    display: block; font-size: 0.82rem; font-weight: 500;
+    color: var(--accent) !important; text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 8px;
+  }
+
+  input[type="password"] {
+    width: 100%; background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: inherit;
+    font-size: 0.95rem; padding: 12px 16px; outline: none;
+    transition: border-color .3s, background .4s, color .4s;
+  }
+
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
+
+  .emotion-section {
+    background: var(--surface); border: 2px solid var(--accent3);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(56,189,248,.12);
+    transition: border-color 0.5s, background 0.5s, box-shadow 0.5s;
+  }
+
+  .emotion-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+  .emotion-btn {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 50px; color: var(--text); cursor: pointer;
+    font-family: inherit; font-size: 0.9rem; padding: 8px 20px; transition: all .3s;
+  }
+
+  .emotion-btn:hover { border-color: var(--accent3); background: var(--border); }
+
+  .emotion-btn.active {
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    border-color: var(--accent); color: #fff; font-weight: 700;
+    transform: scale(1.05); box-shadow: 0 4px 14px rgba(124,58,237,.3);
+  }
+
+  .upload-section {
+    background: var(--surface); border: 2px solid var(--accent2);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 28px;
+    box-shadow: 0 4px 20px rgba(245,196,0,.12);
+    transition: border-color 0.5s, background 0.5s, box-shadow 0.5s;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--accent); border-radius: 12px;
+    cursor: pointer; padding: 36px; text-align: center; transition: all .3s;
+    margin-top: 14px; background: var(--card);
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent3); background: rgba(56,189,248,.07);
+  }
+
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 2.4rem; margin-bottom: 10px; }
+  .upload-zone p { color: var(--muted); font-size: 0.9rem; }
+  .upload-zone strong { color: var(--accent); font-weight: 700; }
+
+  .preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; margin-top: 18px;
+  }
+
+  .preview-item {
+    position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1;
+    border: 2px solid #a78bfa; animation: popIn .3s ease;
+    box-shadow: 0 2px 8px rgba(124,58,237,.15);
+  }
+
+  @keyframes popIn {
+    from { opacity:0; transform: scale(.85); }
+    to   { opacity:1; transform: scale(1); }
+  }
+
+  .preview-item img { width:100%; height:100%; object-fit:cover; }
+
+  .preview-item .order-badge {
+    position: absolute; top:6px; left:6px;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    color:#fff; border-radius:50%; width:24px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.75rem; font-weight:700;
+  }
+
+  .preview-item .remove-btn {
+    position: absolute; top:6px; right:6px; background: rgba(0,0,0,.6);
+    border:none; border-radius:50%; color:#fff; cursor:pointer;
+    font-size:1rem; width:24px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .preview-item .remove-btn:hover { background: var(--accent); }
+
+  .generate-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent3) 0%, var(--accent) 60%, #a21caf 100%);
+    border: none; border-radius: var(--radius); color: #fff; cursor: pointer;
+    font-family: inherit; font-size: 1.05rem; font-weight: 700;
+    letter-spacing: .04em; padding: 18px; transition: all .2s; margin-bottom: 28px;
+    box-shadow: 0 6px 24px rgba(124,58,237,.3);
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,58,237,.45);
+  }
+
+  .generate-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+  .output-section {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 32px; display: none;
+    box-shadow: 0 8px 32px rgba(124,58,237,.12);
+    transition: border-color 0.5s, background 0.5s, box-shadow 0.5s;
+  }
+
+  .output-section.visible { display:block; animation: fadeUp .4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(16px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .output-header { display:flex; align-items:center; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
+
+  .emotion-tag {
+    background:#fefce8; border:2px solid var(--accent2); border-radius:50px;
+    color:#92400e; font-size:0.82rem; font-weight:600; padding:4px 14px;
+  }
+
+  .story-text {
+    font-family: 'Playfair Display', serif; font-size: 1.05rem;
+    line-height: 1.95; color: var(--text); white-space: pre-wrap;
+    transition: font-family 0.4s, color 0.4s;
+  }
+
+  .spinner {
+    width:40px; height:40px; border:3px solid #e0e7ff;
+    border-top-color:var(--accent); border-radius:50%;
+    animation:spin .8s linear infinite; margin:32px auto; display:none;
+  }
+
+  .spinner.visible { display:block; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .status-msg { text-align:center; color:var(--muted); font-size:0.9rem; display:none; margin-bottom:12px; }
+  .status-msg.visible { display:block; }
+
+  .section-title { font-size:0.85rem; font-weight:700; color:var(--accent); letter-spacing:.1em; margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <button class="lang-btn active" data-lang="en">&#x1F1FA;&#x1F1F8; EN</button>
+  <button class="lang-btn" data-lang="ko">&#x1F1F0;&#x1F1F7; KO</button>
+</div>
+
+<div class="container">
+  <header>
+    <h1 id="headerTitle">&#x1F4D6; Picture Story Generator</h1>
+    <p id="headerSubtitle">Exercise 3 &mdash; Generate short stories based on pictures and emotions</p>
+  </header>
+
+  <div class="api-section">
+    <label id="apiLabel">&#x1F511; OpenAI API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+  </div>
+
+  <div class="emotion-section">
+    <div class="section-title" id="emotionSectionTitle">Select Emotion</div>
+    <div class="emotion-grid" id="emotionGrid"></div>
+  </div>
+
+  <div class="upload-section">
+    <div class="section-title" id="uploadSectionTitle">Upload Pictures</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*" multiple />
+      <div class="upload-icon">&#x1F5BC;&#xFE0F;</div>
+      <p id="uploadHint1"><strong>Click</strong> or drag and drop images here</p>
+      <p id="uploadHint2">Select multiple images in order (JPG, PNG, WEBP)</p>
+    </div>
+    <div class="preview-grid" id="previewGrid"></div>
+  </div>
+
+  <button class="generate-btn" id="generateBtn" disabled>&#x2728; Generate Story</button>
+
+  <div class="spinner" id="spinner"></div>
+  <div class="status-msg" id="statusMsg">Analyzing pictures and generating your story...</div>
+
+  <div class="output-section" id="outputSection">
+    <div class="output-header">
+      <span style="font-size:1.3rem">&#x1F4DC;</span>
+      <h2 id="outputTitle" style="font-family:'Playfair Display',serif;font-size:1.2rem">Generated Story</h2>
+      <span class="emotion-tag" id="emotionTag"></span>
+    </div>
+    <p class="story-text" id="storyText"></p>
+    <div id="charCount" style="margin-top:16px;text-align:right;font-size:0.82rem;color:var(--muted);"></div>
+  </div>
+</div>
+
+<script>
+var currentLang     = 'en';
+var selectedEmotion = '';
+var uploadedImages  = [];
+
+var strings = {
+  en: {
+    title:        '&#x1F4D6; Picture Story Generator',
+    subtitle:     'Exercise 3 — Generate short stories based on pictures and emotions',
+    apiLabel:     '&#x1F511; OpenAI API Key',
+    emotionTitle: 'Select Emotion',
+    uploadTitle:  'Upload Pictures',
+    uploadHint1:  '<strong>Click</strong> or drag and drop images here',
+    uploadHint2:  'Select multiple images in order (JPG, PNG, WEBP)',
+    generateBtn:  '&#x2728; Generate Story',
+    loadingMsg:   'Analyzing pictures and generating your story...',
+    outputTitle:  'Generated Story',
+    outputFont:   "'Playfair Display', serif",
+    headerFont:   "'Playfair Display', serif",
+    bodyFont:     "'Inter', sans-serif",
+    imageAlt:     function(i){ return 'Image ' + (i+1); },
+    count:        function(s){ return s.split(/\s+/).filter(Boolean).length + ' words'; },
+    errorPrefix:  'An error occurred:\n',
+  },
+  ko: {
+    title:        '&#x1F4D6; 그림 이야기 생성기',
+    subtitle:     '실습문제 3 — 그림과 감정을 기반으로 짧은 이야기를 생성합니다',
+    apiLabel:     '&#x1F511; OpenAI API Key',
+    emotionTitle: '감정 선택',
+    uploadTitle:  '그림 업로드',
+    uploadHint1:  '<strong>클릭</strong>하거나 이미지를 드래그해서 업로드하세요',
+    uploadHint2:  '여러 장의 이미지를 순서대로 선택해 주세요 (JPG, PNG, WEBP)',
+    generateBtn:  '&#x2728; 이야기 생성하기',
+    loadingMsg:   '그림을 분석하고 이야기를 생성하는 중…',
+    outputTitle:  '생성된 이야기',
+    outputFont:   "'Noto Serif KR', serif",
+    headerFont:   "'Noto Serif KR', serif",
+    bodyFont:     "'Noto Sans KR', sans-serif",
+    imageAlt:     function(i){ return '이미지 ' + (i+1); },
+    count:        function(s){ return s.replace(/\s/g,'').length + '자'; },
+    errorPrefix:  '오류가 발생했습니다:\n',
+  },
+};
+
+var emotions = [
+  {key:'Happy',       en:'&#x1F60A; Happy',        ko:'&#x1F60A; 행복한'},
+  {key:'Sad',         en:'&#x1F622; Sad',           ko:'&#x1F622; 슬픈'},
+  {key:'Suspenseful', en:'&#x1F630; Suspenseful',   ko:'&#x1F630; 긴장감 있는'},
+  {key:'Excited',     en:'&#x1F970; Excited',       ko:'&#x1F970; 설레는'},
+  {key:'Mysterious',  en:'&#x1F30C; Mysterious',    ko:'&#x1F30C; 신비로운'},
+  {key:'Warm',        en:'&#x1F338; Warm',          ko:'&#x1F338; 따뜻한'},
+  {key:'Bittersweet', en:'&#x1F342; Bittersweet',   ko:'&#x1F342; 슬프고 아름다운'},
+  {key:'Cheerful',    en:'&#x1F604; Cheerful',      ko:'&#x1F604; 유콘한'},
+  {key:'Scary',       en:'&#x1F631; Scary',         ko:'&#x1F631; 무서운'},
+  {key:'Fantastical', en:'&#x2728; Fantastical',    ko:'&#x2728; 환상적인'},
+  {key:'Lonely',      en:'&#x1F319; Lonely',        ko:'&#x1F319; 외로운'},
+  {key:'Nostalgic',   en:'&#x1F54A;&#xFE0F; Nostalgic', ko:'&#x1F54A;&#xFE0F; 그리운'},
+  {key:'Brave',       en:'&#x1F981; Brave',         ko:'&#x1F981; 용감한'},
+  {key:'Peaceful',    en:'&#x1F33F; Peaceful',      ko:'&#x1F33F; 평화로운'},
+  {key:'Dreamlike',   en:'&#x1F30A; Dreamlike',     ko:'&#x1F30A; 몬환적인'},
+  {key:'Epic',        en:'&#x26A1; Epic',            ko:'&#x26A1; 웅장한'},
+  {key:'Cute',        en:'&#x1F423; Cute',           ko:'&#x1F423; 귀여운'},
+  {key:'Thrilling',   en:'&#x1F3A2; Thrilling',     ko:'&#x1F3A2; 짜릿한'},
+  {key:'Furious',     en:'&#x1F30B; Furious',       ko:'&#x1F30B; 분노한'},
+  {key:'Heartbroken', en:'&#x1F494; Heartbroken',   ko:'&#x1F494; 상처받은'},
+  {key:'Hopeful',     en:'&#x1F98B; Hopeful',       ko:'&#x1F98B; 희망찬'},
+  {key:'Dramatic',    en:'&#x1F3AD; Dramatic',      ko:'&#x1F3AD; 극적인'},
+  {key:'Melancholic', en:'&#x1F327;&#xFE0F; Melancholic', ko:'&#x1F327;&#xFE0F; 우울한'},
+];
+
+var tones = {
+  Happy:       {en:'Use a bright, lively, and hopeful tone with positive expressions and vivid, energetic descriptions.',
+                ko:'밝고 활기차며 희망적인 어조로, 꺍정적인 표현과 생동감 있는 묘사를 사용하세요.'},
+  Sad:         {en:'Use a quiet, melancholic tone that conveys emotional depth and a sense of longing.',
+                ko:'잌잌하고 애잔한 어조로, 감정의 깊이와 그리움을 담아 표현하세요.'},
+  Suspenseful: {en:'Use short, punchy sentences to build tension and create a breathless sense of suspense.',
+                ko:'짧고 빠른 문장으로 긴박감을 높이고, 독자가 숨을 참게 만드는 서스펜스를 조성하세요.'},
+  Excited:     {en:'Use a tone brimming with anticipation and butterflies, vividly depicting heart-fluttering moments.',
+                ko:'두근거리는 감정과 기대감이 넘치는 어조로, 가슴 떨리는 순간을 생생하게 묘사하세요.'},
+  Mysterious:  {en:'Use a dreamy, enigmatic tone that conveys wonder and awe toward the unknown.',
+                ko:'몬환적이고 수수께끼 같은 어조로, 알 수 없는 무언가에 대한 경이로움을 담아 표현하세요.'},
+  Warm:        {en:'Use a cozy, affectionate tone that captures the small joys of everyday life and the warmth between people.',
+                ko:'포근하고 다정한 어조로, 일상의 소소한 행복과 사람 사이의 온기를 담아 표현하세요.'},
+  Bittersweet: {en:'Use a lyrical tone tinged with beautiful sorrow, portraying the beauty found in loss and memory.',
+                ko:'아름다운 슬픔과 애수가 깃들어 있는 서정적인 어조로, 상실과 기억의 아름다움을 묘사하세요.'},
+  Cheerful:    {en:'Use a witty and humorous tone, expressing events lightly so laughter and joy overflow.',
+                ko:'재치 있고 유머러스한 어조로, 웃음과 즐거움이 넘치도록 경쿨하게 표현하세요.'},
+  Scary:       {en:'Use a dark, unsettling tone that builds dread and tension, conjuring an eerie atmosphere.',
+                ko:'어둥고 불안한 어조로, 공포와 긴장감을 조성하며 으스스한 분위기를 연출하세요.'},
+  Fantastical: {en:'Use a dreamy, magical tone that vividly depicts a wondrous world beyond reality.',
+                ko:'꽔같고 마법적인 어조로, 현실을 넘어선 경이로운 세계를 생동감 있게 묘사하세요.'},
+  Lonely:      {en:'Use a quiet, desolate tone that delicately expresses the feeling of solitude and inner isolation.',
+                ko:'고요하고 쓸쓸한 어조로, 홈로 있는 감정과 내면의 고독을 섬세하게 표현하세요.'},
+  Nostalgic:   {en:'Use a lyrical, reminiscing tone that carries longing for past times and cherished memories.',
+                ko:'회상하는 듯한 서정적 어조로, 지난 시간과 소중한 기억에 대한 그리움을 담아주세요.'},
+  Brave:       {en:'Use a powerful, resolute tone that conveys the courage to overcome fear and an unyielding will.',
+                ko:'힙차고 결연한 어조로, 두려움을 이겨내는 용기와 강인한 의지를 표현하세요.'},
+  Peaceful:    {en:'Use a slow, serene tone that portrays the beauty nestled within the calm of nature and daily life.',
+                ko:'느리고 고요한 어조로, 자연과 일상의 평온함 속에 깃들어 있는 아름다움을 묘사하세요.'},
+  Dreamlike:   {en:'Use a hazy tone that blurs the boundary between reality and dream, creating an ambiguous, fantastical atmosphere.',
+                ko:'현실과 꽔의 경계를 흐리는 몬롭한 어조로, 모호하고 환상적인 분위기를 연출하세요.'},
+  Epic:        {en:'Use a grand, sweeping tone that majestically depicts the greatness of nature or momentous events.',
+                ko:'장엄하고 스케일이 큰 어조로, 대자연이나 사건의 위대함을 웅장하게 묘사하세요.'},
+  Cute:        {en:'Use an adorable, innocent tone that expresses the pure charm of small, lovable beings.',
+                ko:'사랑스럽고 천진난만한 어조로, 작고 귀여운 존재들의 순수한 매력을 표현하세요.'},
+  Thrilling:   {en:'Use an excited, dynamic tone that vividly captures the heart-pounding thrill and exhilaration.',
+                ko:'흥분되고 역동적인 어조로, 심장이 두근거리는 스릴과 춨감을 생생하게 묘사하세요.'},
+  Furious:     {en:'Use a blazing, volcanic tone filled with raw uncontrollable fury. Short explosive sentences. The world itself seems to tremble.',
+                ko:'세상이 떠리는 듯한 원초적인 분노와 통제 불능의 격렬함을 짧고 폭발적인 문장으로 표현하세요.'},
+  Heartbroken: {en:'Use a hollow, aching tone that quietly mourns a loss too deep for words. Even silence feels heavy with grief.',
+                ko:'말로 표현할 수 없을 만큼 깊은 상실을 조용히 애도하는, 침묵조차 묵직한 텔 빈 아품의 어조를 사용하세요.'},
+  Hopeful:     {en:'Use a tender, luminous tone that finds the first light of possibility in the smallest of moments, like dawn quietly breaking through clouds.',
+                ko:'구름 사이로 조심스럽게 새어나는 여명처럼, 작은 순간에서 가능성의 쳫 빛을 발견하는 부드럽고 빛나는 어조를 사용하세요.'},
+  Dramatic:    {en:'Use a theatrical, intense tone. Sweeping emotions, vivid contrasts. Every moment feels as though it carries the full weight of fate.',
+                ko:'각 순간이 운명의 무게를 지닌 것처럼 느낄지도록, 격렬한 감정과 극적인 대비가 있는 연극적이고 강렇한 어조를 사용하세요.'},
+  Melancholic: {en:'Use a grey, rain-soaked tone that drifts through the quiet numbness of days that pass without meaning. No drama, only weight.',
+                ko:'의미 없이 흘러가는 날들의 먹먹한 무게를 조용히 떠다니는, 드라마 없이 그저 무거운 회색빛 빗속의 어조를 사용하세요.'},
+};
+
+var themes = {
+  Happy:       {bg:'linear-gradient(135deg,#fff9c4,#ffe082,#ffd166)',          a:'#d97706',a2:'#fbbf24',a3:'#fb923c',t:'#451a03',m:'#92400e',s:'#fffef5',c:'#fff8dc',b:'#fcd34d',serif:false,fi:'normal'},
+  Sad:         {bg:'linear-gradient(135deg,#dde8f0,#a0b4c8,#8daec5)',          a:'#3b6e8c',a2:'#60a5fa',a3:'#7cb9d8',t:'#162536',m:'#3b5775',s:'#f4f8fb',c:'#e8f0f7',b:'#93b8d0',serif:true, fi:'italic'},
+  Suspenseful: {bg:'linear-gradient(135deg,#1a0000,#3d0606,#1a0000)',          a:'#ef4444',a2:'#fca5a5',a3:'#dc2626',t:'#fecaca',m:'#fca5a5',s:'#1c0505',c:'#2a0808',b:'#7f1d1d',serif:false,fi:'normal'},
+  Excited:     {bg:'linear-gradient(135deg,#fce4ec,#ecd9f8,#dbeafe)',          a:'#ec4899',a2:'#f9a8d4',a3:'#c084fc',t:'#4a0024',m:'#9d174d',s:'#fff5f8',c:'#fce7f3',b:'#f9a8d4',serif:true, fi:'italic'},
+  Mysterious:  {bg:'linear-gradient(135deg,#0e0520,#1e0a3c,#0a0318)',          a:'#a78bfa',a2:'#c4b5fd',a3:'#7c3aed',t:'#e8d5ff',m:'#c4b5fd',s:'#130830',c:'#1e104a',b:'#4c1d95',serif:true, fi:'normal'},
+  Warm:        {bg:'linear-gradient(135deg,#fff3e0,#ffe0b2,#ffcc80)',          a:'#f97316',a2:'#fed7aa',a3:'#fb923c',t:'#431407',m:'#9a3412',s:'#fffaf5',c:'#fff3e0',b:'#fdba74',serif:true, fi:'normal'},
+  Bittersweet: {bg:'linear-gradient(135deg,#e8e0f0,#c9b8d8,#a898c0)',          a:'#8b5cf6',a2:'#ddd6fe',a3:'#a78bfa',t:'#2d1b54',m:'#6b21a8',s:'#f5f0fc',c:'#ede9fe',b:'#c4b5fd',serif:true, fi:'italic'},
+  Cheerful:    {bg:'linear-gradient(135deg,#d1fae5,#a7f3d0,#fef3c7)',          a:'#10b981',a2:'#6ee7b7',a3:'#34d399',t:'#064e3b',m:'#065f46',s:'#f0fdf4',c:'#dcfce7',b:'#6ee7b7',serif:false,fi:'normal'},
+  Scary:       {bg:'linear-gradient(135deg,#060606,#150202,#060606)',          a:'#dc2626',a2:'#7f1d1d',a3:'#991b1b',t:'#e5e5e5',m:'#9ca3af',s:'#111111',c:'#1c1c1c',b:'#3b0808',serif:true, fi:'normal'},
+  Fantastical: {bg:'linear-gradient(135deg,#fdf4ff,#e9d5ff,#dbeafe,#fef9c3)', a:'#9333ea',a2:'#d8b4fe',a3:'#818cf8',t:'#2e1065',m:'#6b21a8',s:'#fdfaff',c:'#f5f0ff',b:'#d8b4fe',serif:true, fi:'italic'},
+  Lonely:      {bg:'linear-gradient(135deg,#0f172a,#1e293b,#0f172a)',          a:'#60a5fa',a2:'#93c5fd',a3:'#38bdf8',t:'#bfdbfe',m:'#93c5fd',s:'#0f1b2d',c:'#1e2d40',b:'#1e3a5f',serif:true, fi:'italic'},
+  Nostalgic:   {bg:'linear-gradient(135deg,#fdf6ec,#f5deb3,#d4a96a)',          a:'#b45309',a2:'#fbbf24',a3:'#d97706',t:'#3b1a08',m:'#78350f',s:'#fdf8f0',c:'#fef3e0',b:'#d97706',serif:true, fi:'italic'},
+  Brave:       {bg:'linear-gradient(135deg,#fff5f5,#fecaca,#fef3c7)',          a:'#dc2626',a2:'#fca5a5',a3:'#f97316',t:'#450a0a',m:'#991b1b',s:'#fff5f5',c:'#fee2e2',b:'#f87171',serif:false,fi:'normal'},
+  Peaceful:    {bg:'linear-gradient(135deg,#ecfdf5,#d1fae5,#e0f2fe)',          a:'#059669',a2:'#6ee7b7',a3:'#34d399',t:'#064e3b',m:'#065f46',s:'#f0fdf8',c:'#dcfce7',b:'#6ee7b7',serif:true, fi:'normal'},
+  Dreamlike:   {bg:'linear-gradient(135deg,#e0f2fe,#99f6e4,#e9d5ff)',          a:'#0891b2',a2:'#67e8f9',a3:'#22d3ee',t:'#0c4a6e',m:'#0369a1',s:'#f0fbff',c:'#e0f7ff',b:'#67e8f9',serif:true, fi:'italic'},
+  Epic:        {bg:'linear-gradient(135deg,#080818,#1a1a3e,#080818)',          a:'#d97706',a2:'#fbbf24',a3:'#f59e0b',t:'#fef3c7',m:'#fcd34d',s:'#0f0f24',c:'#1a1a3e',b:'#78350f',serif:true, fi:'normal'},
+  Cute:        {bg:'linear-gradient(135deg,#fce7f3,#fbcfe8,#e9d5ff)',          a:'#ec4899',a2:'#f9a8d4',a3:'#f472b6',t:'#4a044e',m:'#9d174d',s:'#fff5f8',c:'#fce7f3',b:'#f9a8d4',serif:false,fi:'normal'},
+  Thrilling:   {bg:'linear-gradient(135deg,#ecfdf5,#d1fae5,#dbeafe)',          a:'#059669',a2:'#34d399',a3:'#06b6d4',t:'#052e16',m:'#065f46',s:'#f0fdf4',c:'#dcfce7',b:'#34d399',serif:false,fi:'normal'},
+  Furious:     {bg:'linear-gradient(135deg,#1a0300,#4a0e00,#7c1a00)',          a:'#ea580c',a2:'#fed7aa',a3:'#dc2626',t:'#fef2e8',m:'#fdba74',s:'#1c0400',c:'#2d0a00',b:'#7c2d12',serif:false,fi:'normal'},
+  Heartbroken: {bg:'linear-gradient(135deg,#e8e0e8,#d4c4d4,#c0aec0)',          a:'#9d4a6b',a2:'#e8c1d0',a3:'#c084a8',t:'#2d1a24',m:'#7b4060',s:'#f5f0f5',c:'#ede5ed',b:'#d4b8c8',serif:true, fi:'italic'},
+  Hopeful:     {bg:'linear-gradient(135deg,#f0fdfa,#e0f2fe,#f0fdf4)',          a:'#0d9488',a2:'#99f6e4',a3:'#0ea5e9',t:'#042f2e',m:'#0f766e',s:'#f0fff8',c:'#ccfbf1',b:'#5eead4',serif:false,fi:'normal'},
+  Dramatic:    {bg:'linear-gradient(135deg,#150008,#3d0018,#150008)',          a:'#e11d48',a2:'#fbbf24',a3:'#be123c',t:'#fce7f3',m:'#fda4af',s:'#1a0010',c:'#290018',b:'#9f1239',serif:true, fi:'italic'},
+  Melancholic: {bg:'linear-gradient(135deg,#1e2a38,#2d3f52,#1a2433)',          a:'#64748b',a2:'#94a3b8',a3:'#7fa4c0',t:'#cbd5e1',m:'#94a3b8',s:'#1e2a38',c:'#253444',b:'#475569',serif:true, fi:'italic'},
+};
+
+function getFont(isSerif) {
+  return currentLang === 'ko'
+    ? (isSerif ? "'Noto Serif KR', serif"    : "'Noto Sans KR', sans-serif")
+    : (isSerif ? "'Playfair Display', serif" : "'Inter', sans-serif");
+}
+
+function getLabel(key) {
+  var em = emotions.find(function(e){ return e.key === key; });
+  if (!em) return key;
+  return currentLang === 'ko' ? em.ko : em.en;
+}
+
+function applyTheme(key) {
+  var t = themes[key]; if (!t) return;
+  var r = document.documentElement;
+  document.body.style.background = t.bg;
+  r.style.setProperty('--accent',  t.a);
+  r.style.setProperty('--accent2', t.a2);
+  r.style.setProperty('--accent3', t.a3);
+  r.style.setProperty('--text',    t.t);
+  r.style.setProperty('--muted',   t.m);
+  r.style.setProperty('--surface', t.s);
+  r.style.setProperty('--card',    t.c);
+  r.style.setProperty('--border',  t.b);
+  document.querySelectorAll('.api-section,.emotion-section,.upload-section').forEach(function(el){
+    el.style.boxShadow = '0 4px 20px ' + t.a + '28';
+  });
+  document.getElementById('generateBtn').style.background =
+    'linear-gradient(135deg, ' + t.a3 + ' 0%, ' + t.a + ' 100%)';
+  var st = document.getElementById('storyText');
+  st.style.fontFamily = getFont(t.serif);
+  st.style.fontStyle  = t.fi;
+}
+
+function renderButtons() {
+  var grid = document.getElementById('emotionGrid');
+  grid.innerHTML = '';
+  emotions.forEach(function(em) {
+    var btn = document.createElement('button');
+    btn.className = 'emotion-btn' + (selectedEmotion === em.key ? ' active' : '');
+    btn.dataset.emotion = em.key;
+    btn.innerHTML = currentLang === 'ko' ? em.ko : em.en;
+    grid.appendChild(btn);
+  });
+}
+
+function renderPreviews() {
+  var grid = document.getElementById('previewGrid');
+  var s = strings[currentLang];
+  grid.innerHTML = '';
+  uploadedImages.forEach(function(img, i) {
+    var div = document.createElement('div');
+    div.className = 'preview-item';
+    div.innerHTML =
+      '<img src="' + img.dataUrl + '" alt="' + s.imageAlt(i) + '" />' +
+      '<div class="order-badge">' + (i+1) + '</div>' +
+      '<button class="remove-btn" data-idx="' + i + '">✕</button>';
+    grid.appendChild(div);
+  });
+  grid.querySelectorAll('.remove-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      uploadedImages.splice(+btn.dataset.idx, 1);
+      renderPreviews(); checkReady();
+    });
+  });
+}
+
+function renderUI() {
+  var s = strings[currentLang];
+  document.documentElement.lang = currentLang;
+  document.title = currentLang === 'ko' ? '그림 이야기 생성기' : 'Picture Story Generator';
+  document.body.style.fontFamily = s.bodyFont;
+  document.getElementById('headerTitle').innerHTML   = s.title;
+  document.getElementById('headerTitle').style.fontFamily = s.headerFont;
+  document.getElementById('headerSubtitle').innerHTML = s.subtitle;
+  document.getElementById('apiLabel').innerHTML      = s.apiLabel;
+  document.getElementById('emotionSectionTitle').textContent = s.emotionTitle;
+  document.getElementById('uploadSectionTitle').textContent  = s.uploadTitle;
+  document.getElementById('uploadHint1').innerHTML   = s.uploadHint1;
+  document.getElementById('uploadHint2').textContent = s.uploadHint2;
+  document.getElementById('generateBtn').innerHTML   = s.generateBtn;
+  document.getElementById('statusMsg').textContent   = s.loadingMsg;
+  var ot = document.getElementById('outputTitle');
+  ot.textContent     = s.outputTitle;
+  ot.style.fontFamily = s.outputFont;
+  if (selectedEmotion) {
+    document.getElementById('emotionTag').innerHTML = getLabel(selectedEmotion);
+    var th = themes[selectedEmotion];
+    if (th) document.getElementById('storyText').style.fontFamily = getFont(th.serif);
+  }
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+  renderButtons(); renderPreviews(); checkReady();
+}
+
+function checkReady() {
+  document.getElementById('generateBtn').disabled =
+    !(selectedEmotion && uploadedImages.length >= 1 && document.getElementById('apiKey').value.trim());
+}
+
+document.querySelector('.lang-toggle').addEventListener('click', function(e) {
+  var btn = e.target.closest('.lang-btn');
+  if (!btn || btn.dataset.lang === currentLang) return;
+  currentLang = btn.dataset.lang; renderUI();
+});
+
+document.getElementById('emotionGrid').addEventListener('click', function(e) {
+  var btn = e.target.closest('.emotion-btn');
+  if (!btn) return;
+  document.querySelectorAll('.emotion-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  selectedEmotion = btn.dataset.emotion;
+  applyTheme(selectedEmotion); checkReady();
+});
+
+var zone = document.getElementById('uploadZone');
+var fi   = document.getElementById('fileInput');
+zone.addEventListener('click',     function(){ fi.click(); });
+zone.addEventListener('dragover',  function(e){ e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', function(){ zone.classList.remove('dragover'); });
+zone.addEventListener('drop', function(e) {
+  e.preventDefault(); zone.classList.remove('dragover');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fi.addEventListener('change', function(){ handleFiles(Array.from(fi.files)); });
+
+function handleFiles(files) {
+  files.filter(function(f){ return f.type.startsWith('image/'); }).forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      uploadedImages.push({file:file, dataUrl:ev.target.result});
+      renderPreviews(); checkReady();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('apiKey').addEventListener('input', checkReady);
+document.getElementById('generateBtn').addEventListener('click', generateStory);
+
+async function generateStory() {
+  var apiKey = document.getElementById('apiKey').value.trim();
+  var spinner = document.getElementById('spinner');
+  var statusMsg = document.getElementById('statusMsg');
+  var outputSection = document.getElementById('outputSection');
+  var btn = document.getElementById('generateBtn');
+
+  btn.disabled = true;
+  outputSection.classList.remove('visible');
+  spinner.classList.add('visible');
+  statusMsg.classList.add('visible');
+
+  try {
+    var ic = [];
+    uploadedImages.forEach(function(img, i) {
+      var b64 = img.dataUrl.split(',')[1];
+      var mt  = img.file.type || 'image/jpeg';
+      ic.push({type:'text', text: currentLang==='ko' ? '그림 '+(i+1)+':' : 'Picture '+(i+1)+':'});
+      ic.push({type:'image_url', image_url:{url:'data:'+mt+';base64,'+b64}});
+    });
+
+    var tone  = tones[selectedEmotion] && tones[selectedEmotion][currentLang]
+                  ? tones[selectedEmotion][currentLang]
+                  : 'Faithfully reflect the mood of "'+selectedEmotion+'".';
+    var label = getLabel(selectedEmotion);
+
+    var sp = currentLang==='ko'
+      ? `당신은 창의적인 한국어 동화 작가입니다.
+사용자가 제공한 여러 장의 그림을 순서대로 분석하세요.
+각 그림 속 인물, 배경, 사물을 구체적으로 파악하여 이야기에 반영하세요.
+
+선택된 감정: ${label}
+어조 지침: ${tone}
+
+위 감정과 어조를 바탕으로 그림들을 자연스럽게 연결하는 짧고 아름다운 이야기를 한국어로 작성하세요.
+이야기는 그림의 순서에 따라 흐름이 이어져야 하며, 500~800자 분량으로 작성하세요.
+결과물은 이야기 본문만 출력하고 별도의 설명이나 머리말은 생략하세요.`
+      : `You are a creative English short-story writer.
+Analyze the provided pictures in order.
+Identify specific details (characters, setting, objects) and weave them into your story.
+
+Selected emotion: ${label}
+Tone guide: ${tone}
+
+Write a short, beautiful English story connecting the pictures in sequence.
+Approximately 150–250 words. Output only the story text.`;
+
+    var ut = currentLang==='ko'
+      ? '위 그림들을 순서대로 보고 "' + label + '" 감정으로 이야기를 써주세요.'
+      : 'Please look at the pictures in order and write a story with the emotion "' + label + '".';
+
+    var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:'gpt-4o', max_tokens:1600,
+        messages:[
+          {role:'system', content:sp},
+          {role:'user',   content:ic.concat([{type:'text',text:ut}])}
+        ]
+      })
+    });
+
+    if (!resp.ok) {
+      var err = await resp.json();
+      throw new Error(err.error && err.error.message ? err.error.message : 'API error: '+resp.status);
+    }
+
+    var data  = await resp.json();
+    var story = data.choices[0].message.content.trim();
+    document.getElementById('storyText').textContent  = story;
+    document.getElementById('emotionTag').innerHTML   = label;
+    document.getElementById('charCount').textContent  = strings[currentLang].count(story);
+    outputSection.classList.add('visible');
+
+  } catch(err) {
+    alert(strings[currentLang].errorPrefix + err.message);
+  } finally {
+    spinner.classList.remove('visible');
+    statusMsg.classList.remove('visible');
+    btn.disabled = false;
+    checkReady();
+  }
+}
+
+renderUI();
+</script>
+</body>
+</html>
